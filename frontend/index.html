@@ -1,0 +1,77 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A simple serverless task manager built on Microsoft Azure.">
+  <title>TaskFlow | Task Manager</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><span class="brand-icon">✓</span> TaskFlow</div>
+    <span class="cloud-label">☁ Azure Cloud Project</span>
+  </header>
+
+  <main class="container">
+    <section class="welcome">
+      <div>
+        <p class="eyebrow">YOUR WORKSPACE</p>
+        <h1>Manage your tasks.</h1>
+        <p class="subtitle">Stay organized and get things done.</p>
+      </div>
+      <div class="date" id="today"></div>
+    </section>
+
+    <section class="stats">
+      <article class="stat-card">
+        <span>Total tasks</span>
+        <strong id="totalCount">0</strong>
+      </article>
+      <article class="stat-card">
+        <span>Pending</span>
+        <strong id="pendingCount">0</strong>
+      </article>
+      <article class="stat-card">
+        <span>Completed</span>
+        <strong id="completedCount">0</strong>
+      </article>
+    </section>
+
+    <section class="panel">
+      <h2>Add a new task</h2>
+      <form id="taskForm">
+        <input id="taskTitle" type="text"
+          placeholder="What needs to be done?" maxlength="150" required>
+        <input id="taskDescription" type="text"
+          placeholder="Description (optional)" maxlength="500">
+        <div class="form-bottom">
+          <label class="file-label">
+            📎 Attach file
+            <input id="taskFile" type="file">
+          </label>
+          <button type="submit" class="primary-btn">+ Add task</button>
+        </div>
+        <p id="formMessage" class="message" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section class="tasks-section">
+      <div class="task-heading">
+        <h2>Your tasks</h2>
+        <select id="filter">
+          <option value="all">All tasks</option>
+          <option value="pending">Pending</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+      <div id="taskList" class="task-list"></div>
+      <p id="emptyMessage" class="empty">No tasks yet. Add your first task!</p>
+    </section>
+  </main>
+
+  <footer>TaskFlow · Serverless Task Manager · Microsoft Azure</footer>
+  <script src="app.js"></script>
+</body>
+</html>
