@@ -7,3 +7,9 @@ local.settings.json
 dist/
 coverage/
 *.log
+# TaskFlow local files
+function-name.txt
+api/.azurite/
+api/azure-upload-test.txt
+api/azure-downloaded-test.txt
+infra/main.json
