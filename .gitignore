@@ -13,3 +13,6 @@ api/.azurite/
 api/azure-upload-test.txt
 api/azure-downloaded-test.txt
 infra/main.json
+
+# Local Azure resource references
+keyvault-name.txt
