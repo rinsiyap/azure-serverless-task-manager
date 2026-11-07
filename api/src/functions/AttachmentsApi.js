@@ -3,6 +3,7 @@ const { CosmosClient } = require("@azure/cosmos");
 const { BlobServiceClient } = require("@azure/storage-blob");
 const { DefaultAzureCredential } = require("@azure/identity");
 const { randomUUID } = require("crypto");
+const { withFirebaseAuth } = require("./auth");
 
 const credential = new DefaultAzureCredential();
 
@@ -29,16 +30,35 @@ const attachments = blobService.getContainerClient(
     process.env.STORAGE_CONTAINER
 );
 
+function isNotFound(error) {
+    return error.code === 404 || error.statusCode === 404;
+}
+
+async function getOwnedTask(id, uid) {
+    try {
+        const { resource } = await tasks.item(id, id).read();
+
+        if (!resource || resource.userId !== uid) {
+            return null;
+        }
+
+        return resource;
+    } catch (error) {
+        if (isNotFound(error)) return null;
+        throw error;
+    }
+}
+
 // POST /api/tasks/{id}/attachment
 app.http("uploadAttachment", {
     methods: ["POST"],
     authLevel: "anonymous",
     route: "tasks/{id}/attachment",
-    handler: async (request) => {
+    handler: withFirebaseAuth(async (request) => {
         const id = request.params.id;
 
         try {
-            const { resource: task } = await tasks.item(id, id).read();
+            const task = await getOwnedTask(id, request.authUser.uid);
 
             if (!task) {
                 return {
@@ -62,7 +82,9 @@ app.http("uploadAttachment", {
             if (file.size <= 0 || file.size > maxSize) {
                 return {
                     status: 400,
-                    jsonBody: { error: "File must be between 1 byte and 5 MB" }
+                    jsonBody: {
+                        error: "File must be between 1 byte and 5 MB"
+                    }
                 };
             }
 
@@ -75,7 +97,8 @@ app.http("uploadAttachment", {
                 Buffer.from(await file.arrayBuffer()),
                 {
                     blobHTTPHeaders: {
-                        blobContentType: file.type || "application/octet-stream"
+                        blobContentType:
+                            file.type || "application/octet-stream"
                     }
                 }
             );
@@ -98,7 +121,7 @@ app.http("uploadAttachment", {
                 }
             };
         } catch (error) {
-            if (error.code === 404 || error.statusCode === 404) {
+            if (isNotFound(error)) {
                 return {
                     status: 404,
                     jsonBody: { error: "Task not found" }
@@ -112,7 +135,7 @@ app.http("uploadAttachment", {
                 jsonBody: { error: "Could not upload attachment" }
             };
         }
-    }
+    })
 });
 
 // GET /api/tasks/{id}/attachment
@@ -120,11 +143,11 @@ app.http("downloadAttachment", {
     methods: ["GET"],
     authLevel: "anonymous",
     route: "tasks/{id}/attachment",
-    handler: async (request) => {
+    handler: withFirebaseAuth(async (request) => {
         const id = request.params.id;
 
         try {
-            const { resource: task } = await tasks.item(id, id).read();
+            const task = await getOwnedTask(id, request.authUser.uid);
 
             if (!task) {
                 return {
@@ -140,23 +163,29 @@ app.http("downloadAttachment", {
                 };
             }
 
-            const blob = attachments.getBlobClient(task.attachment.blobName);
+            const blob = attachments.getBlobClient(
+                task.attachment.blobName
+            );
+
             const download = await blob.download();
 
             return {
                 status: 200,
                 headers: {
                     "Content-Type": task.attachment.contentType,
-                    "Content-Disposition": `attachment; filename="${task.attachment.fileName.replace(/["\r\n]/g, "_")}"`,
+                    "Content-Disposition":
+                        `attachment; filename="${task.attachment.fileName.replace(/["\r\n]/g, "_")}"`,
                     "Cache-Control": "no-store"
                 },
                 body: download.readableStreamBody
             };
         } catch (error) {
-            if (error.code === 404 || error.statusCode === 404) {
+            if (isNotFound(error)) {
                 return {
                     status: 404,
-                    jsonBody: { error: "Task or attachment not found" }
+                    jsonBody: {
+                        error: "Task or attachment not found"
+                    }
                 };
             }
 
@@ -167,7 +196,7 @@ app.http("downloadAttachment", {
                 jsonBody: { error: "Could not download attachment" }
             };
         }
-    }
+    })
 });
 
 // DELETE /api/tasks/{id}/attachment
@@ -175,11 +204,11 @@ app.http("deleteAttachment", {
     methods: ["DELETE"],
     authLevel: "anonymous",
     route: "tasks/{id}/attachment",
-    handler: async (request) => {
+    handler: withFirebaseAuth(async (request) => {
         const id = request.params.id;
 
         try {
-            const { resource: task } = await tasks.item(id, id).read();
+            const task = await getOwnedTask(id, request.authUser.uid);
 
             if (!task) {
                 return {
@@ -195,7 +224,9 @@ app.http("deleteAttachment", {
                 };
             }
 
-            const blob = attachments.getBlobClient(task.attachment.blobName);
+            const blob = attachments.getBlobClient(
+                task.attachment.blobName
+            );
 
             await blob.deleteIfExists();
 
@@ -205,13 +236,17 @@ app.http("deleteAttachment", {
 
             return {
                 status: 200,
-                jsonBody: { message: "Attachment deleted successfully" }
+                jsonBody: {
+                    message: "Attachment deleted successfully"
+                }
             };
         } catch (error) {
-            if (error.code === 404 || error.statusCode === 404) {
+            if (isNotFound(error)) {
                 return {
                     status: 404,
-                    jsonBody: { error: "Task or attachment not found" }
+                    jsonBody: {
+                        error: "Task or attachment not found"
+                    }
                 };
             }
 
@@ -222,5 +257,5 @@ app.http("deleteAttachment", {
                 jsonBody: { error: "Could not delete attachment" }
             };
         }
-    }
+    })
 });

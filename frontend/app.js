@@ -1,3 +1,12 @@
+
+import {
+  auth,
+  googleProvider,
+  signInWithPopup,
+  signOut,
+  onAuthStateChanged
+} from "./firebase.js";
+
 const API_URL = "https://taskflow-api-378624.azurewebsites.net/api/tasks";
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
@@ -6,8 +15,14 @@ const taskList = document.getElementById("taskList");
 const filter = document.getElementById("filter");
 const fileInput = document.getElementById("taskFile");
 
-let tasks = [];
+const signInBtn = document.getElementById("signInBtn");
+const signOutBtn = document.getElementById("signOutBtn");
+const userInfo = document.getElementById("userInfo");
 
+let tasks = [];
+let currentUser = null;
+
+// Display today's date
 document.getElementById("today").textContent =
   new Date().toLocaleDateString("en-IN", {
     weekday: "long",
@@ -16,11 +31,30 @@ document.getElementById("today").textContent =
     year: "numeric"
   });
 
-// JSON API requests
-async function apiRequest(url = API_URL, options = {}) {
-  const headers = { ...options.headers };
+// Get Firebase authentication token
+async function getAuthHeaders() {
+  if (!currentUser) {
+    throw new Error("Please sign in with Google first.");
+  }
 
-  if (!(options.body instanceof FormData) && options.body !== undefined) {
+  const token = await currentUser.getIdToken();
+
+  return {
+    Authorization: `Bearer ${token}`
+  };
+}
+
+// API requests with Firebase authentication
+async function apiRequest(url = API_URL, options = {}) {
+  const headers = {
+    ...options.headers,
+    ...await getAuthHeaders()
+  };
+
+  if (
+    !(options.body instanceof FormData) &&
+    options.body !== undefined
+  ) {
     headers["Content-Type"] = "application/json";
   }
 
@@ -45,22 +79,39 @@ async function apiRequest(url = API_URL, options = {}) {
   return response.json();
 }
 
+// Display messages
 function showMessage(message, isError = false) {
   const element = document.getElementById("formMessage");
   element.textContent = message;
   element.style.color = isError ? "red" : "";
 }
 
+// Load tasks
 async function loadTasks() {
+  const userAtRequest = currentUser;
+  if (!userAtRequest) return;
+
   try {
-    tasks = await apiRequest();
+    const result = await apiRequest();
+
+    if (!currentUser || currentUser.uid !== userAtRequest.uid) return;
+
+    tasks = result;
     renderTasks();
+
+    showMessage(
+      tasks.length === 0
+        ? "No tasks yet. Add your first task!"
+        : ""
+    );
   } catch (error) {
+    if (!currentUser || currentUser.uid !== userAtRequest.uid) return;
     console.error("Could not load tasks:", error);
-    showMessage("Could not connect to the TaskFlow API.", true);
+    showMessage(error.message, true);
   }
 }
 
+// Render tasks and dashboard counters
 function renderTasks() {
   taskList.replaceChildren();
 
@@ -96,10 +147,12 @@ function renderTasks() {
 
     info.append(title, description);
 
+    // Attachment information and actions
     if (task.attachment) {
       const attachmentInfo = document.createElement("p");
+
       attachmentInfo.textContent =
-        `?? ${task.attachment.fileName} (${(task.attachment.size / 1024).toFixed(1)} KB)`;
+        `\u{1F4CE} ${task.attachment.fileName} (${(task.attachment.size / 1024).toFixed(1)} KB)`;
 
       const downloadButton = document.createElement("button");
       downloadButton.textContent = "Download file";
@@ -107,7 +160,10 @@ function renderTasks() {
       downloadButton.addEventListener("click", async () => {
         try {
           const response = await fetch(
-            `${API_URL}/${task.id}/attachment`
+            `${API_URL}/${task.id}/attachment`,
+            {
+              headers: await getAuthHeaders()
+            }
           );
 
           if (!response.ok) {
@@ -120,11 +176,13 @@ function renderTasks() {
 
           link.href = url;
           link.download = task.attachment.fileName;
+
           document.body.appendChild(link);
           link.click();
           link.remove();
 
           URL.revokeObjectURL(url);
+
           showMessage("Attachment downloaded successfully!");
         } catch (error) {
           showMessage(error.message, true);
@@ -155,11 +213,14 @@ function renderTasks() {
       );
     }
 
+    // Task actions
     const actions = document.createElement("div");
     actions.className = "task-actions";
 
     const completeButton = document.createElement("button");
-    completeButton.textContent = task.completed ? "Undo" : "Complete";
+
+    completeButton.textContent =
+      task.completed ? "Undo" : "Complete";
 
     completeButton.addEventListener("click", async () => {
       try {
@@ -204,7 +265,13 @@ function renderTasks() {
 form.addEventListener("submit", async event => {
   event.preventDefault();
 
+  if (!currentUser) {
+    showMessage("Please sign in with Google first.", true);
+    return;
+  }
+
   const title = document.getElementById("taskTitle").value.trim();
+
   const description =
     document.getElementById("taskDescription").value.trim();
 
@@ -223,7 +290,10 @@ form.addEventListener("submit", async event => {
   try {
     const task = await apiRequest(API_URL, {
       method: "POST",
-      body: JSON.stringify({ title, description })
+      body: JSON.stringify({
+        title,
+        description
+      })
     });
 
     if (file) {
@@ -241,6 +311,7 @@ form.addEventListener("submit", async event => {
     form.reset();
 
     await loadTasks();
+
     showMessage(
       file
         ? "Task and attachment uploaded successfully!"
@@ -254,6 +325,47 @@ form.addEventListener("submit", async event => {
   }
 });
 
+// Task filtering
 filter.addEventListener("change", renderTasks);
 
-loadTasks();
+// Google sign-in
+signInBtn.addEventListener("click", async () => {
+  try {
+    await signInWithPopup(auth, googleProvider);
+  } catch (error) {
+    console.error("Google sign-in failed:", error);
+    showMessage(`Google sign-in failed: ${error.message}`, true);
+  }
+});
+
+// Sign out
+signOutBtn.addEventListener("click", async () => {
+  try {
+    await signOut(auth);
+  } catch (error) {
+    console.error("Sign-out failed:", error);
+    showMessage(`Sign-out failed: ${error.message}`, true);
+  }
+});
+
+// Monitor authentication state
+onAuthStateChanged(auth, async user => {
+  currentUser = user;
+
+  signInBtn.hidden = !!user;
+  signOutBtn.hidden = !user;
+
+  userInfo.textContent = user
+    ? `Signed in: ${user.email}`
+    : "Not signed in";
+
+  if (user) {
+    showMessage("Signed in successfully. Loading your tasks...");
+    await loadTasks();
+  } else {
+    tasks = [];
+    renderTasks();
+    form.reset();
+    showMessage("Sign in with Google to access your tasks.");
+  }
+});

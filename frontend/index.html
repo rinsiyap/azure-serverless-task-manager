@@ -1,77 +1,245 @@
-
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="A simple serverless task manager built on Microsoft Azure.">
-  <title>TaskFlow | Task Manager</title>
+  <meta name="theme-color" content="#f7f8fc">
+  <meta name="description" content="TaskFlow — a smarter, simpler way to organize your work and stay productive.">
+  <title>TaskFlow | Your Personal Workspace</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
+  <div class="page-glow page-glow-one" aria-hidden="true"></div>
+  <div class="page-glow page-glow-two" aria-hidden="true"></div>
+
   <header class="topbar">
-    <div class="brand"><span class="brand-icon">✓</span> TaskFlow</div>
-    <span class="cloud-label">☁ Azure Cloud Project</span>
+    <a class="brand" href="#" aria-label="TaskFlow home">
+      <span class="brand-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none">
+          <path d="M5 12.5 9.2 16.5 19 7" stroke="currentColor"
+            stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </span>
+      <span class="brand-name">TaskFlow<span class="brand-period">.</span></span>
+    </a>
+
+    <div class="header-right">
+      <div class="secure-label">
+        <span class="secure-dot"></span>
+        Your workspace
+      </div>
+
+      <div class="auth-controls">
+        <span id="userInfo" class="user-info">Not signed in</span>
+        <button id="signInBtn" class="google-btn" type="button">
+          <svg viewBox="0 0 48 48" aria-hidden="true">
+            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.73 7.18l7.65 5.93c4.47-4.13 7.12-10.2 7.12-17.58z"/>
+            <path fill="#FBBC05" d="M10.53 28.59A14.4 14.4 0 0 1 9.75 24c0-1.59.27-3.13.76-4.59l-7.98-6.19A23.9 23.9 0 0 0 0 24c0 3.87.93 7.52 2.56 10.78l7.97-6.19z"/>
+            <path fill="#34A853" d="M24 48c6.47 0 11.91-2.13 15.87-5.87l-7.65-5.93c-2.12 1.42-4.84 2.27-8.22 2.27-6.26 0-11.57-4.22-13.46-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+          </svg>
+          <span>Sign in with Google</span>
+        </button>
+        <button id="signOutBtn" class="signout-btn" type="button" hidden>
+          Sign out
+        </button>
+      </div>
+    </div>
   </header>
 
   <main class="container">
     <section class="welcome">
-      <div>
-        <p class="eyebrow">YOUR WORKSPACE</p>
-        <h1>Manage your tasks.</h1>
-        <p class="subtitle">Stay organized and get things done.</p>
-      </div>
-      <div class="date" id="today"></div>
-    </section>
-
-    <section class="stats">
-      <article class="stat-card">
-        <span>Total tasks</span>
-        <strong id="totalCount">0</strong>
-      </article>
-      <article class="stat-card">
-        <span>Pending</span>
-        <strong id="pendingCount">0</strong>
-      </article>
-      <article class="stat-card">
-        <span>Completed</span>
-        <strong id="completedCount">0</strong>
-      </article>
-    </section>
-
-    <section class="panel">
-      <h2>Add a new task</h2>
-      <form id="taskForm">
-        <input id="taskTitle" type="text"
-          placeholder="What needs to be done?" maxlength="150" required>
-        <input id="taskDescription" type="text"
-          placeholder="Description (optional)" maxlength="500">
-        <div class="form-bottom">
-          <label class="file-label">
-            📎 Attach file
-            <input id="taskFile" type="file">
-          </label>
-          <button type="submit" class="primary-btn">+ Add task</button>
+      <div class="welcome-copy">
+        <div class="eyebrow">
+          <span class="eyebrow-line"></span>
+          YOUR PERSONAL WORKSPACE
         </div>
-        <p id="formMessage" class="message" aria-live="polite"></p>
-      </form>
+        <h1>Make room for<br><span>great work.</span></h1>
+        <p class="subtitle">
+          Bring your tasks together, stay focused, and make every day count.
+        </p>
+      </div>
+
+      <div class="welcome-side">
+        <div class="date-card">
+          <span class="date-label">TODAY</span>
+          <div class="date-value" id="today"></div>
+          <div class="date-decoration" aria-hidden="true">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="stats" aria-label="Task overview">
+      <article class="stat-card stat-total">
+        <div class="stat-top">
+          <span class="stat-label">Total tasks</span>
+          <span class="stat-icon">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+          </span>
+        </div>
+        <strong id="totalCount" class="stat-number">0</strong>
+        <span class="stat-caption">Everything on your list</span>
+      </article>
+
+      <article class="stat-card stat-pending">
+        <div class="stat-top">
+          <span class="stat-label">Pending</span>
+          <span class="stat-icon">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 7v5l3 2" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </div>
+        <strong id="pendingCount" class="stat-number">0</strong>
+        <span class="stat-caption">Ready when you are</span>
+      </article>
+
+      <article class="stat-card stat-completed">
+        <div class="stat-top">
+          <span class="stat-label">Completed</span>
+          <span class="stat-icon">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <path d="m5 12.5 4.5 4.5L19 7" stroke="currentColor"
+                stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </span>
+        </div>
+        <strong id="completedCount" class="stat-number">0</strong>
+        <span class="stat-caption">Progress worth celebrating</span>
+      </article>
+    </section>
+
+    <section class="workspace-grid">
+      <div class="panel create-panel">
+        <div class="panel-heading">
+          <div>
+            <span class="section-kicker">GET STARTED</span>
+            <h2>Create a task</h2>
+            <p class="panel-description">A small step today makes a big difference tomorrow.</p>
+          </div>
+          <span class="heading-mark" aria-hidden="true">＋</span>
+        </div>
+
+        <form id="taskForm">
+          <div class="field-group">
+            <label for="taskTitle">Task title</label>
+            <input
+              id="taskTitle"
+              type="text"
+              placeholder="e.g. Prepare project presentation"
+              maxlength="150"
+              required
+            >
+          </div>
+
+          <div class="field-group">
+            <label for="taskDescription">Description <span>(optional)</span></label>
+            <input
+              id="taskDescription"
+              type="text"
+              placeholder="Add a little more detail..."
+              maxlength="500"
+            >
+          </div>
+
+          <div class="form-bottom">
+            <label class="file-label" for="taskFile">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="m8.5 12.5 6.7-6.7a3.5 3.5 0 0 1 5 5l-8.8 8.8a5 5 0 0 1-7.1-7.1l8.5-8.5"
+                  stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+              </svg>
+              <span>Attach a file</span>
+              <input id="taskFile" type="file">
+            </label>
+
+            <button type="submit" class="primary-btn">
+              <span>Add task</span>
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M5 12h14m-6-6 6 6-6 6" stroke="currentColor"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+          </div>
+
+          <p id="formMessage" class="message" aria-live="polite"></p>
+        </form>
+      </div>
+
+      <aside class="focus-card">
+        <div class="focus-orbit focus-orbit-one" aria-hidden="true"></div>
+        <div class="focus-orbit focus-orbit-two" aria-hidden="true"></div>
+        <div class="focus-content">
+          <span class="focus-label">A LITTLE REMINDER</span>
+          <div class="focus-symbol" aria-hidden="true">
+            <svg viewBox="0 0 48 48" fill="none">
+              <path d="M24 5v5M24 38v5M5 24h5M38 24h5M10.6 10.6l3.5 3.5m19.8 19.8 3.5 3.5m0-26.8-3.5 3.5m-19.8 19.8-3.5 3.5"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="24" cy="24" r="10" stroke="currentColor" stroke-width="2"/>
+              <path d="m19.5 24 3 3 6-7" stroke="currentColor"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <h3>One thing<br>at a time.</h3>
+          <p>Focus on what matters most. Your progress starts with the next task.</p>
+        </div>
+        <div class="focus-bottom">
+          <span class="focus-bottom-dot"></span>
+          <span>Make today meaningful</span>
+        </div>
+      </aside>
     </section>
 
     <section class="tasks-section">
       <div class="task-heading">
-        <h2>Your tasks</h2>
-        <select id="filter">
-          <option value="all">All tasks</option>
-          <option value="pending">Pending</option>
-          <option value="completed">Completed</option>
-        </select>
+        <div>
+          <span class="section-kicker">YOUR WORKLOAD</span>
+          <h2>Your tasks<span class="heading-period">.</span></h2>
+          <p class="tasks-subtitle">Keep track of what needs your attention.</p>
+        </div>
+
+        <div class="filter-wrap">
+          <label for="filter">Show</label>
+          <select id="filter">
+            <option value="all">All tasks</option>
+            <option value="pending">Pending</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
       </div>
+
       <div id="taskList" class="task-list"></div>
-      <p id="emptyMessage" class="empty">No tasks yet. Add your first task!</p>
+      <p id="emptyMessage" class="empty">
+        <span class="empty-icon" aria-hidden="true">
+          <svg viewBox="0 0 48 48" fill="none">
+            <rect x="9" y="8" width="30" height="34" rx="5"
+              stroke="currentColor" stroke-width="2"/>
+            <path d="M17 18h14M17 25h14M17 32h8"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+        </span>
+        <strong>No tasks yet</strong>
+        <span>Your task list is ready. Add your first task above and get started.</span>
+      </p>
     </section>
   </main>
 
-  <footer>TaskFlow · Serverless Task Manager · Microsoft Azure</footer>
-  <script src="app.js"></script>
+  <footer class="footer">
+    <a class="footer-brand" href="#">TaskFlow<span>.</span></a>
+    <span>Designed for focus. Built for productivity.</span>
+    <span class="footer-tech">Powered by Microsoft Azure</span>
+  </footer>
+
+  <script type="module" src="app.js"></script>
 </body>
 </html>
