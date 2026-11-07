@@ -1,0 +1,14 @@
+flowchart TD
+    U[User browser] --> SWA[Azure Static Web Apps]
+    U --> FB[Firebase Authentication - Google]
+    SWA -->|HTTPS / Bearer token| API[Azure Functions HTTP API]
+    API --> AUTH[Verify Firebase ID token<br/>Google Secure Token JWKS]
+    API --> DB[(Azure Cosmos DB)]
+    API --> BLOB[(Private Azure Blob Storage)]
+    API --> KV[Azure Key Vault]
+    API --> AI[Application Insights]
+    AI --> LAW[Log Analytics]
+    LAW --> ALERT[Azure Monitor 5xx alert]
+    ALERT --> AG[Action Group email]
+    GH[GitHub repository - main] --> GA[GitHub Actions]
+    GA --> SWA
