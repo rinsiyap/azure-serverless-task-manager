@@ -6,7 +6,6 @@ TaskFlow is a cloud-hosted task management application built with a JavaScript f
 
 ## Live Application
 
-- **Web app:** https://zealous-flower-04d85e400.8.azurestaticapps.net
 - **GitHub repository:** https://github.com/rinsiyap/azure-serverless-task-manager
 - **Deployment:** GitHub Actions deploys frontend changes pushed to the `main` branch.
 
